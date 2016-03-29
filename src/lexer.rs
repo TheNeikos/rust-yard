@@ -7,12 +7,12 @@ pub struct Lexer<'a> {
     iter: peek::PeekableStringIterator<'a>,
     sign: Option<char>,
     pub ast: Vec<token::Token>,
-    pub errors: Vec<String> 
+    pub errors: Vec<String>
 }
 
 impl<'a> Lexer<'a> {
     pub fn new() -> Lexer<'a> {
-        Lexer { 
+        Lexer {
             ast: Vec::new(),
             errors: vec![],
             iter: peek::PeekableStringIterator::new(),
@@ -47,7 +47,7 @@ impl<'a> Lexer<'a> {
                 self.sign = None;
 
                 self.ast.push(token::Token::Whitespace);
-            }, 
+            },
             Some(c) if c.is_numeric() => {
                 // Grab the number (allowing for possible decimals)
                 let number = self.consume_number();
@@ -62,13 +62,13 @@ impl<'a> Lexer<'a> {
             },
             Some(c) if c == '+' || c == '-' => {
                 // Add the operator and advance the iterator
-                self.ast.push(token::Token::Operator(c, token::LEFT_ASSOCIATIVE, 2));
+                self.ast.push(token::Token::Operator(c, token::Associativity::Left, 2));
             },
             Some(c) if c == '*' || c == '/' => {
                 // Add the operator and advance the iterator
-                self.ast.push(token::Token::Operator(c, token::LEFT_ASSOCIATIVE, 3));
+                self.ast.push(token::Token::Operator(c, token::Associativity::Left, 3));
             },
-            Some(c) if c == '^' => self.ast.push(token::Token::Operator(c, token::RIGHT_ASSOCIATIVE, 4)),
+            Some(c) if c == '^' => self.ast.push(token::Token::Operator(c, token::Associativity::Right, 4)),
             Some(c) if c == '(' => self.ast.push(token::Token::LeftParenthesis),
             Some(c) if c == ')' => self.ast.push(token::Token::RightParenthesis),
             Some(c) if c == ',' => self.ast.push(token::Token::Comma),

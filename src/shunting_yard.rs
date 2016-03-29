@@ -69,10 +69,10 @@ impl<'a> ShuntingYard<'a> {
                     while self.stack.len() > 0 {
                         match self.stack.last() {
                             Some(&token::Token::Operator(_, _, o2_precedence)) => {
-                                if (o1_associativity == token::LEFT_ASSOCIATIVE &&
+                                if (o1_associativity == token::Associativity::Left &&
                                    o1_precedence <= o2_precedence) ||
-                                   (o1_associativity == token::RIGHT_ASSOCIATIVE &&
-                                   o1_precedence < o2_precedence) { 
+                                   (o1_associativity == token::Associativity::Right &&
+                                   o1_precedence < o2_precedence) {
                                        self.output_queue.push(self.stack.pop().unwrap());
                                    } else {
                                        break
@@ -91,7 +91,7 @@ impl<'a> ShuntingYard<'a> {
                     loop {
                         match self.stack.last() {
                             Some(&token::Token::LeftParenthesis) => {
-                                self.stack.pop().unwrap(); 
+                                self.stack.pop().unwrap();
                                 break;
                             },
                             None => {
