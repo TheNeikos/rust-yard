@@ -74,7 +74,11 @@ impl<'a> Lexer<'a> {
             Some(c) if c == ',' => self.ast.push(token::Token::Comma),
             Some(c) if c.is_alphabetic() => {
                 let ident = self.consume_identifier();
-                self.ast.push(token::Token::FunctionCall(ident));
+                if self.iter.peek() == Some(&'(') {
+                    self.ast.push(token::Token::FunctionCall(ident));
+                } else if self.iter.peek() != None {
+                    self.ast.push(token::Token::Variable(ident));
+                }
                 skip_advance = true;
             },
             None => return,

@@ -19,5 +19,5 @@ fn can_detect_unknown_identifiers() {
 
     let err = &yard.calculate("2a + 4").unwrap_err()[0];
 
-    assert_eq!("Unknown identifier: a", &err[..]);
+    assert_eq!("Unknown identifier: \'a\', and no variables supplied", &err[..]);
 }

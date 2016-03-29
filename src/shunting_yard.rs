@@ -3,6 +3,7 @@
  */
 
 use std;
+use std::collections::HashMap;
 
 use lexer;
 use rpn_calculator as calc;
@@ -10,20 +11,22 @@ use token;
 
 /// The ShuntingYard struct transforms an expression
 /// to a 64-bit floating point value
-pub struct ShuntingYard<'a> {
+pub struct ShuntingYard<'a, 'b> {
     lexer: lexer::Lexer<'a>,
     output_queue: Vec<token::Token>,
     stack: Vec<token::Token>,
-    errors: Vec<String>
+    errors: Vec<String>,
+    variables: Option<&'b HashMap<String, f64>>,
 }
 
-impl<'a> ShuntingYard<'a> {
-    pub fn new() -> ShuntingYard<'a> {
+impl<'a, 'b> ShuntingYard<'a, 'b> {
+    pub fn new() -> ShuntingYard<'a, 'b> {
         ShuntingYard {
             lexer: lexer::Lexer::new(),
             output_queue: vec![],
             stack: vec![],
-            errors: vec![]
+            errors: vec![],
+            variables: None,
         }
     }
 
@@ -53,6 +56,12 @@ impl<'a> ShuntingYard<'a> {
         }
 
         calc::calculate(&self.output_queue)
+    }
+
+    pub fn calculate_with_variables(&mut self, raw_input: &'a str, vars: &'b HashMap<String, f64>)
+        -> Result<f64, Vec<String>> {
+        self.variables = Some(vars);
+        self.calculate(raw_input)
     }
 
     // Transforms the input from the Lexer in to the output_queue
@@ -119,7 +128,17 @@ impl<'a> ShuntingYard<'a> {
                         }
                     }
                 },
-                _ => ()
+                token::Token::Whitespace => (),
+                token::Token::Variable(ref name) => {
+                    if let Some(ref vars) = self.variables {
+                        match vars.get(name) {
+                            Some(v) => self.stack.push(token::Token::DecimalNumber(*v)),
+                            None => self.errors.push(format!("Could not find variable: {}", name)),
+                        }
+                    } else {
+                        self.errors.push(format!("Unknown identifier: '{}', and no variables supplied", name));
+                    }
+                }
             }
         }
 
@@ -155,7 +174,18 @@ impl<'a> ShuntingYard<'a> {
                 token::Token::LeftParenthesis => result.push_str("("),
                 token::Token::RightParenthesis => result.push_str(")"),
                 token::Token::Comma => result.push_str(","),
-                _ => ()
+                token::Token::Variable(ref name) => {
+                    if let Some(ref vars) = self.variables {
+                        match vars.get(name) {
+                            Some(v) => result.push_str(&v.to_string()[..]),
+                            None => result.push_str(name),
+                        }
+                    } else {
+                        result.push_str(name);
+                    }
+                }
+                token::Token::WholeNumber(_) => (),
+                token::Token::Whitespace => (),
             };
 
             if *tok != token::Token::Whitespace {
@@ -168,7 +198,7 @@ impl<'a> ShuntingYard<'a> {
     }
 }
 
-impl<'a> std::string::ToString for ShuntingYard<'a> {
+impl<'a, 'b> std::string::ToString for ShuntingYard<'a, 'b> {
     /// to_string returns the string representation of the Shunting Yard
     /// algorithm in Reverse Polish Notation.
     fn to_string(&self) -> String {

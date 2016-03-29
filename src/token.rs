@@ -10,6 +10,7 @@ pub enum Token {
     WholeNumber(i64),
     DecimalNumber(f64),
     FunctionCall(String),
+    Variable(String),
     Comma,
     LeftParenthesis,
     RightParenthesis,
